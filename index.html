@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Mastery | Ergo Studio v16.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap');
+        
+        :root {
+            --bg-deep: #020617;
+            --surface: #0f172a;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: #f1f5f9;
+            scroll-behavior: smooth;
+        }
+
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .workspace-card {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .workspace-card:hover {
+            border-color: rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.05);
+        }
+
+        .nav-link {
+            position: relative;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+        .nav-link.active { color: #fff; }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .topic-row {
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .topic-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-left-color: var(--accent);
+        }
+        .topic-row.completed {
+            background: rgba(56, 189, 248, 0.01);
+            opacity: 0.6;
+        }
+
+        .ergo-checkbox {
+            width: 28px;
+            height: 28px;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .ergo-checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .note-input {
+            background: #020617;
+            border: 1px solid #1e293b;
+            color: #cbd5e1;
+            font-size: 11px;
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+            transition: all 0.2s;
+        }
+        .note-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 200px;
+            margin: auto;
+            height: 200px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        .progress-pill {
+            height: 6px;
+            background: #1e293b;
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .progress-pill-fill {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-[60] glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-9 h-9 bg-sky-500 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-lg shadow-sky-500/20">SDE</div>
+                <h1 class="text-xs font-black tracking-widest uppercase font-outfit">Syllabus <span class="text-sky-400">Workspace</span></h1>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-10">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link active">Dashboard</button>
+                <button onclick="switchTab('roadmap')" id="nav-roadmap" class="nav-link">Learning Path</button>
+                <button onclick="switchTab('directory')" id="nav-directory" class="nav-link">Search Hub</button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
+                    <span class="text-[10px] font-black text-sky-400 uppercase tracking-tighter">Mastery: <span id="mastery-score-nav">0%</span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 pt-24 pb-20">
+
+        <!-- DASHBOARD -->
+        <section id="view-dashboard" class="space-y-8 animate-in">
+            
+            <!-- Mastery Stats Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Overall Ring -->
+                <div class="lg:col-span-4 workspace-card rounded-[32px] p-8 flex flex-col items-center">
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Overall Progress</h3>
+                    <div class="chart-container mb-6">
+                        <canvas id="mainChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span id="math-done" class="text-4xl font-black font-outfit">0</span>
+                            <span id="math-total" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">/ 75 Topics</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-white/5 rounded-2xl p-4 text-center border border-white/5">
+                        <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Total Completion</p>
+                        <p id="math-pct" class="text-xl font-black font-outfit text-sky-400">0%</p>
+                    </div>
+                </div>
+
+                <!-- NeetCode/Striver Mastery Grid -->
+                <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div id="stat-stage-1" class="workspace-card rounded-[24px] p-6 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[9px] font-black text-sky-400 uppercase tracking-widest mb-1">Stage 01</p>
+                            <h4 class="text-sm font-bold font-outfit text-white uppercase">Core Foundations</h4>
+                        </div>
+                        <div class="mt-8">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Progress</span>
+                                <span class="stage-count text-xs font-black text-white">0 / 20</span>
+                            </div>
+                            <div class="progress-pill"><div class="progress-pill-fill" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                    <div id="stat-stage-2" class="workspace-card rounded-[24px] p-6 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[9px] font-black text-sky-400 uppercase tracking-widest mb-1">Stage 02</p>
+                            <h4 class="text-sm font-bold font-outfit text-white uppercase">Scaling Patterns</h4>
+                        </div>
+                        <div class="mt-8">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Progress</span>
+                                <span class="stage-count text-xs font-black text-white">0 / 20</span>
+                            </div>
+                            <div class="progress-pill"><div class="progress-pill-fill" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                    <div id="stat-stage-3" class="workspace-card rounded-[24px] p-6 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[9px] font-black text-sky-400 uppercase tracking-widest mb-1">Stage 03</p>
+                            <h4 class="text-sm font-bold font-outfit text-white uppercase">Case Studies</h4>
+                        </div>
+                        <div class="mt-8">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Progress</span>
+                                <span class="stage-count text-xs font-black text-white">0 / 20</span>
+                            </div>
+                            <div class="progress-pill"><div class="progress-pill-fill" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                    <div id="stat-stage-4" class="workspace-card rounded-[24px] p-6 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[9px] font-black text-sky-400 uppercase tracking-widest mb-1">Stage 04</p>
+                            <h4 class="text-sm font-bold font-outfit text-white uppercase">Advanced LLD</h4>
+                        </div>
+                        <div class="mt-8">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Progress</span>
+                                <span class="stage-count text-xs font-black text-white">0 / 14</span>
+                            </div>
+                            <div class="progress-pill"><div class="progress-pill-fill" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategic Interaction Loop -->
+            <div class="workspace-card rounded-[32px] p-8">
+                <div class="mb-8">
+                    <h3 class="text-lg font-black font-outfit uppercase">Interview Strategy Playbook</h3>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Tactical protocol for high-level design sessions</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                    <button onclick="openTopic(11)" class="p-5 rounded-2xl bg-slate-900 border border-white/5 hover:border-sky-500/50 text-left transition-all group">
+                        <span class="text-[8px] font-black text-sky-500 uppercase block mb-2">Phase 01</span>
+                        <p class="text-[10px] font-bold text-slate-200 group-hover:text-white">Clarify Req.</p>
+                    </button>
+                    <button onclick="openTopic(31)" class="p-5 rounded-2xl bg-slate-900 border border-white/5 hover:border-sky-500/50 text-left transition-all group">
+                        <span class="text-[8px] font-black text-sky-500 uppercase block mb-2">Phase 02</span>
+                        <p class="text-[10px] font-bold text-slate-200 group-hover:text-white">Capacity Math</p>
+                    </button>
+                    <button onclick="openTopic(75)" class="p-5 rounded-2xl bg-slate-900 border border-white/5 hover:border-sky-500/50 text-left transition-all group">
+                        <span class="text-[8px] font-black text-sky-500 uppercase block mb-2">Phase 03</span>
+                        <p class="text-[10px] font-bold text-slate-200 group-hover:text-white">HLD Design</p>
+                    </button>
+                    <button onclick="openTopic(18)" class="p-5 rounded-2xl bg-slate-900 border border-white/5 hover:border-sky-500/50 text-left transition-all group">
+                        <span class="text-[8px] font-black text-sky-500 uppercase block mb-2">Phase 04</span>
+                        <p class="text-[10px] font-bold text-slate-200 group-hover:text-white">Deep Dives</p>
+                    </button>
+                    <button onclick="openTopic(16)" class="p-5 rounded-2xl bg-slate-900 border border-white/5 hover:border-sky-500/50 text-left transition-all group">
+                        <span class="text-[8px] font-black text-sky-500 uppercase block mb-2">Phase 05</span>
+                        <p class="text-[10px] font-bold text-slate-200 group-hover:text-white">Trade-offs</p>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEARNING PATH -->
+        <section id="view-roadmap" class="hidden space-y-6">
+            <header class="mb-10">
+                <h2 class="text-3xl font-black font-outfit uppercase">Curriculum Path</h2>
+                <p class="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mt-2">Personal Study Workbook • Ergonomic Navigation</p>
+            </header>
+            <div id="roadmap-container" class="space-y-6"></div>
+        </section>
+
+        <!-- SEARCH HUB -->
+        <section id="view-directory" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <div class="flex-1 glass rounded-2xl px-6 py-4 flex items-center gap-4">
+                    <span class="text-slate-500">🔍</span>
+                    <input type="text" id="searchInput" placeholder="SEARCH ALL MODULES..." class="bg-transparent border-none focus:outline-none text-[11px] w-full text-white placeholder-slate-600 font-bold uppercase tracking-widest">
+                </div>
+                <select id="filterCategory" class="glass rounded-2xl px-6 py-4 text-[10px] font-black text-slate-400 focus:outline-none uppercase cursor-pointer">
+                    <option value="All">All Disciplines</option>
+                </select>
+            </div>
+            <div class="workspace-card rounded-[32px] overflow-hidden">
+                <table class="w-full text-left text-[11px]">
+                    <thead class="bg-slate-900/80 border-b border-white/5">
+                        <tr class="text-slate-500 font-black uppercase tracking-widest">
+                            <th class="px-8 py-6 w-20">Status</th>
+                            <th class="px-8 py-6">Unit</th>
+                            <th class="px-8 py-6">Instructor</th>
+                            <th class="px-8 py-6 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="directoryTableBody" class="divide-y divide-white/5"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- KNOWLEDGE VAULT MODAL -->
+    <div id="topicModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden p-4">
+        <div class="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" onclick="closeModal()"></div>
+        <div class="glass w-full max-w-xl rounded-[40px] relative overflow-hidden shadow-2xl border-white/10 animate-in">
+            <div class="p-10 md:p-16">
+                <div class="flex justify-between items-start mb-10">
+                    <span id="modalCat" class="px-4 py-1.5 bg-sky-500/10 text-sky-400 text-[9px] font-black uppercase tracking-widest rounded-full">Discipline</span>
+                    <button onclick="closeModal()" class="text-slate-500 hover:text-white transition-all text-2xl font-light">&times;</button>
+                </div>
+                
+                <h2 id="modalTitle" class="text-3xl font-black text-white mb-8 font-outfit leading-tight">Distributed Systems</h2>
+                
+                <div class="bg-slate-950/60 rounded-3xl p-8 border border-white/5 mb-10 shadow-inner">
+                    <p class="text-[9px] font-black text-sky-400 uppercase mb-4 tracking-[0.2em]">Key Interview Context</p>
+                    <p id="modalQuestion" class="text-lg font-medium text-slate-200 leading-relaxed italic font-outfit">"How does this scale..."</p>
+                </div>
+
+                <div id="modalVideosContainer" class="flex flex-col gap-5 pt-10 border-t border-white/5">
+                    <!-- Populated dynamically by openModal() -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const syllabus = [
+            { id: 1, level: 1, category: "HLD Foundations", topic: "Module 1: Scaling & Hardware Limits", channel: "Gaurav Sen", video: "Horizontal vs. Vertical Scaling", question: "Explain the physical limits of scaling vertically and why sharding becomes necessary at scale." },
+            { id: 2, level: 1, category: "HLD Foundations", topic: "Module 2: Traffic Distribution", channel: "Gaurav Sen", video: "What is LOAD BALANCING?", question: "How would you handle load balancing for a sticky-session requirement in a distributed chat app?" },
+            { id: 3, level: 1, category: "HLD Foundations", topic: "Module 3: Distributed Caching", channel: "Gaurav Sen", video: "What is CONSISTENT HASHING", question: "How does consistent hashing prevent massive cache invalidation when adding/removing nodes?" },
+            { id: 4, level: 1, category: "HLD Foundations", topic: "Module 4: Async Architectures", channel: "Gaurav Sen", video: "What is a MESSAGE QUEUE", question: "When should you use a message queue over direct RPC? Discuss the latency trade-offs." },
+            { id: 5, level: 1, category: "HLD Foundations", topic: "Module 5: System Modularity", channel: "Gaurav Sen", video: "MICROSERVICE ARCHITECTURE", question: "How do you manage cross-service consistency without a distributed monolith?" },
+            { id: 6, level: 1, category: "HLD Foundations", topic: "Module 6: Data Storage", videos: [ { channel: "Gaurav Sen", video: "SQL vs NoSQL | Tradeoffs" }, { channel: "Exponent", video: "SQL vs. NoSQL Explained (in 4 Minutes)" } ], question: "For a real-time analytics engine, why might a columnar store be better than a row store?" },
+            { id: 7, level: 1, category: "HLD Foundations", topic: "Module 7: Distributed Data", videos: [ { channel: "ByteByteGo", video: "CAP Theorem" }, { channel: "Tech Primers", video: "PACELC Theorem | Beyond CAP Theorem | System Design Primer" } ], question: "In a network partition, how do you justify prioritizing availability over consistency?" },
+            { id: 8, level: 1, category: "HLD Foundations", topic: "Module 8: Network Protocols", channel: "System Design School", video: "Server-Sent Events vs WebSockets | System Design", question: "Explain the connection overhead of WebSockets versus long polling for mobile clients." },
+            { id: 9, level: 1, category: "HLD Foundations", topic: "Module 9: API Design", videos: [ { channel: "Amichai Mantinband", video: "How To Design Amazing REST APIs" }, { channel: "ByteByteGo", video: "HTTP 1 Vs HTTP 2 Vs HTTP 3!" } ], question: "How would you design a scalable REST API, and how do you handle idempotency for POST requests?" },
+            { id: 10, level: 1, category: "HLD Foundations", topic: "Module 10: Caching Strategies", channel: "ByteByteGo", video: "Caching Strategies", question: "Compare Write-Through and Write-Back caching. When is data loss acceptable?" },
+            { id: 11, level: 1, category: "Interview Mastery", topic: "Module 11: Interview Framework", channel: "Hello Interview", video: "System Design Framework", question: "Walk me through your first 5 minutes of a System Design interview." },
+            { id: 12, level: 1, category: "Interview Mastery", topic: "Module 12: Trade-offs", channel: "InterviewReady", video: "How to justify trade-offs", question: "Defend your choice between eventual and strong consistency for a bank ledger versus a social feed." },
+            { id: 19, level: 1, category: "HLD Foundations", topic: "Module 19: Capacity Planning", channel: "ByteByteGo", video: "Back-of-the-envelope estimation", question: "Estimate the QPS and bandwidth for a photo-sharing app with 10M daily active users." },
+            { id: 18, level: 1, category: "HLD Foundations", topic: "Module 18: Database Sharding", channel: "Hello Interview", video: "Sharding Deep Dive", question: "How do you handle the re-sharding process for a live production database?" },
+            { id: 75, level: 1, category: "Interaction Mastery", topic: "HLD Execution", channel: "Hello Interview", video: "High Level Design Essentials", question: "How do you prevent 'Analysis Paralysis' when choosing a database in the HLD phase?" },
+            { id: 24, level: 2, category: "Architectural Patterns", topic: "Module 24: Microservices Communication", channel: "ByteMonk", video: "REST vs gRPC in Microservices | Which One Should You Use? (Explained Clearly)", question: "What are the trade-offs of using synchronous gRPC versus asynchronous event-driven communication between microservices?" }
+        ];
+
+        // Fill remaining for full 74 topics (categorized by levels)
+        const topicMap = {
+            13: "Rate Limiting & Throttling",       14: "Content Delivery Networks",
+            15: "Service Discovery",                16: "Circuit Breakers & Bulkheads",
+            17: "Event Sourcing",                   19: "CQRS Pattern",
+            20: "Replication Strategies",           21: "API Gateway Pattern",
+            22: "Saga Pattern & Distributed Txns",  23: "Event-Driven Architecture",
+            24: "Microservices Communication",      25: "Strangler Fig Pattern",
+            26: "Sidecar & Ambassador Pattern",     27: "Retry, Backoff & Idempotency",
+            28: "Pub/Sub vs Message Queue",         29: "Data Partitioning Strategies",
+            30: "Read Replicas & Multi-Primary",    31: "Capacity Planning & Estimation",
+            32: "Multi-Region Deployment",
+            33: "Blue-Green & Canary Releases",     34: "Feature Flags & Dark Launches",
+            35: "Observability & Distributed Tracing", 36: "Chaos Engineering",
+            37: "Idempotency & Exactly-Once Delivery", 38: "Long Polling vs Webhooks",
+            39: "Search & Indexing Systems",        40: "Workflow & Task Orchestration",
+            41: "Design Twitter / X Feed",          42: "Design YouTube",
+            43: "Design Uber / Ride-Sharing",       44: "Design WhatsApp",
+            45: "Design Instagram",                 46: "Design Netflix",
+            47: "Design Airbnb",                   48: "Design Google Search",
+            49: "Design Amazon E-Commerce",         50: "Design Slack / Discord",
+            51: "Design Reddit",                    52: "Design Dropbox / Google Drive",
+            53: "Design TikTok",                    54: "Design a Notification System",
+            55: "Design a URL Shortener",           56: "Design a Payment System",
+            57: "Design a Rate Limiter",            58: "Design a Web Crawler",
+            59: "Design Typeahead / Autocomplete",  60: "Design a Ticketing System",
+            61: "LLD: SOLID Principles",            62: "LLD: Creational Design Patterns",
+            63: "LLD: Structural Design Patterns",  64: "LLD: Behavioral Design Patterns",
+            65: "LLD: Design a Cache (LRU/LFU)",    66: "LLD: Design a Parking Lot",
+            67: "LLD: Design an Elevator System",   68: "LLD: Design a Library System",
+            69: "LLD: Design a Movie Booking System", 70: "LLD: Design a Food Delivery System",
+            71: "LLD: Design an ATM",               72: "LLD: Design a Vending Machine",
+            73: "LLD: Design a Logger & Alerting",  74: "LLD: Design a Task Scheduler",
+        };
+        for(let i=1; i<=74; i++) {
+            if (syllabus.some(s => s.id === i)) continue;
+            let cat = i <= 20 ? "HLD Foundations" : i <= 40 ? "Architectural Patterns" : i <= 60 ? "Case Studies" : "Advanced LLD";
+            let lvl = i <= 20 ? 1 : i <= 40 ? 2 : i <= 60 ? 3 : 4;
+            const label = topicMap[i] || `Topic ${i}`;
+            syllabus.push({
+                id: i, level: lvl, category: cat,
+                topic: `Module ${i}: ${label}`,
+                channel: "ByteByteGo", video: label,
+                question: "Explain the scalability bottlenecks inherent in this specific pattern and your mitigation strategy."
+            });
+        }
+
+
+        let completed = JSON.parse(localStorage.getItem('sd_workspace_v16_done')) || [];
+        let notes = JSON.parse(localStorage.getItem('sd_workspace_v16_notes')) || {};
+        let openStages = [1];
+        let mainChart = null;
+
+        window.onload = () => {
+            initApp();
+            renderAll();
+        };
+
+        function initApp() {
+            const categories = [...new Set(syllabus.map(s => s.category))];
+            const filter = document.getElementById('filterCategory');
+            categories.forEach(c => filter.innerHTML += `<option value="${c}">${c}</option>`);
+            document.getElementById('searchInput').addEventListener('input', renderDirectory);
+            document.getElementById('filterCategory').addEventListener('change', renderDirectory);
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderRoadmap();
+            renderDirectory();
+        }
+
+        function switchTab(tab) {
+            ['dashboard', 'roadmap', 'directory'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('active');
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function renderDashboard() {
+            const total = syllabus.length;
+            const doneCount = completed.length;
+            const pct = Math.round((doneCount / total) * 100);
+
+            document.getElementById('math-done').innerText = doneCount;
+            document.getElementById('math-total').innerText = `/ ${total} Topics`;
+            document.getElementById('math-pct').innerText = `${pct}%`;
+            document.getElementById('mastery-score-nav').innerText = `${pct}%`;
+
+            [1, 2, 3, 4].forEach(lvl => {
+                const stageTopics = syllabus.filter(s => s.level === lvl);
+                const stageDone = stageTopics.filter(s => completed.includes(s.id)).length;
+                const stagePct = Math.round((stageDone / stageTopics.length) * 100);
+                
+                const card = document.getElementById(`stat-stage-${lvl}`);
+                card.querySelector('.stage-count').innerText = `${stageDone} / ${stageTopics.length}`;
+                card.querySelector('.progress-pill-fill').style.width = `${stagePct}%`;
+            });
+
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(mainChart) mainChart.destroy();
+            mainChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [doneCount, total - doneCount],
+                        backgroundColor: ['#38bdf8', '#1e293b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '85%', plugins: { tooltip: { enabled: false } }, maintainAspectRatio: false }
+            });
+        }
+
+        function renderRoadmap() {
+            const container = document.getElementById('roadmap-container');
+            container.innerHTML = '';
+            const stages = [
+                { id: 1, name: "Stage 1: Building Foundations", desc: "High-Frequency Concepts" },
+                { id: 2, name: "Stage 2: Architectural Scaling", desc: "Reliability & Resilience" },
+                { id: 3, name: "Stage 3: Real-World Systems", desc: "FAANG Case Studies" },
+                { id: 4, name: "Stage 4: Advanced LLD", desc: "Low Level & Concurrency" }
+            ];
+
+            stages.forEach(stage => {
+                const topics = syllabus.filter(s => s.level === stage.id).sort((a,b) => a.id - b.id);
+                const doneCount = topics.filter(t => completed.includes(t.id)).length;
+                const isOpen = openStages.includes(stage.id);
+
+                const section = document.createElement('div');
+                section.className = "workspace-card rounded-[32px] overflow-hidden";
+                section.innerHTML = `
+                    <div onclick="toggleStage(${stage.id})" class="px-8 py-6 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all">
+                        <div class="flex items-center gap-6">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center text-xs font-black text-sky-400">0${stage.id}</div>
+                            <div>
+                                <h3 class="text-sm font-black font-outfit uppercase tracking-wider">${stage.name}</h3>
+                                <p class="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-widest">${stage.desc}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-8">
+                            <div class="text-right">
+                                <p class="text-[10px] font-black text-sky-400 uppercase tracking-tighter">${doneCount} / ${topics.length} Complete</p>
+                                <div class="w-32 h-1 bg-slate-800 rounded-full mt-2"><div class="h-full bg-sky-500 transition-all duration-500" style="width: ${(doneCount/topics.length)*100}%"></div></div>
+                            </div>
+                            <span class="text-slate-700 transition-transform ${isOpen ? 'rotate-180' : ''}">▼</span>
+                        </div>
+                    </div>
+                    <div class="${isOpen ? '' : 'hidden'} border-t border-white/5 divide-y divide-white/5">
+                        ${topics.map((t) => {
+                            const isDone = completed.includes(t.id);
+                            const hasNote = notes[t.id] && notes[t.id].trim() !== "";
+                            return `
+                                <div class="topic-row px-8 py-5 flex flex-col gap-4 ${isDone ? 'completed' : ''}" id="row-${t.id}">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-5">
+                                            <div onclick="toggleCheck(${t.id})" class="ergo-checkbox ${isDone ? 'checked' : ''}">
+                                                ${isDone ? '<span class="text-white text-[10px]">✓</span>' : ''}
+                                            </div>
+                                            <div class="cursor-pointer" onclick="openTopic(${t.id})">
+                                                <h4 class="text-[12px] font-bold text-slate-200 hover:text-sky-400 transition-all">${t.topic}</h4>
+                                                <p class="text-[9px] text-slate-500 font-black uppercase mt-1 tracking-tighter">${(t.channel || (t.videos && t.videos[0].channel) || '')} • ${t.category}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <button onclick="toggleNote(${t.id})" class="text-[9px] font-black ${hasNote ? 'text-sky-400' : 'text-slate-600'} uppercase hover:text-sky-400 transition-all">
+                                                ${hasNote ? 'Note ✓' : 'Notes'}
+                                            </button>
+                                            <button onclick="openTopic(${t.id})" class="text-[9px] font-black text-sky-500 uppercase hover:text-white transition-all">Deep Dive</button>
+                                        </div>
+                                    </div>
+                                    <div id="note-box-${t.id}" class="hidden transition-all pt-2">
+                                        <textarea id="note-input-${t.id}" onblur="saveNote(${t.id})" placeholder="Capture your interview trade-offs and personal takeaways here..." class="note-input">${notes[t.id] || ''}</textarea>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        function renderDirectory() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cat = document.getElementById('filterCategory').value;
+            const body = document.getElementById('directoryTableBody');
+            body.innerHTML = '';
+
+            syllabus.filter(s => (cat === 'All' || s.category === cat) && (s.topic.toLowerCase().includes(query) || s.channel.toLowerCase().includes(query))).forEach(s => {
+                const isDone = completed.includes(s.id);
+                body.innerHTML += `
+                    <tr class="hover:bg-white/[0.02] transition-all ${isDone ? 'opacity-30' : ''}">
+                        <td class="px-8 py-6">
+                            <div onclick="toggleCheck(${s.id})" class="ergo-checkbox ${isDone ? 'checked' : ''}">
+                                ${isDone ? '<span class="text-white text-[10px]">✓</span>' : ''}
+                            </div>
+                        </td>
+                        <td class="px-8 py-6">
+                            <p class="text-[12px] font-bold text-slate-200">${s.topic}</p>
+                            <p class="text-[9px] text-sky-400 font-black uppercase mt-1 tracking-widest">${s.category}</p>
+                        </td>
+                        <td class="px-8 py-6 text-slate-500 font-bold uppercase text-[9px]">${s.channel}</td>
+                        <td class="px-8 py-6 text-right">
+                            <button onclick="openTopic(${s.id})" class="text-[9px] font-black text-sky-500 uppercase tracking-widest hover:text-white transition-colors">Details</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function toggleStage(id) {
+            openStages = openStages.includes(id) ? openStages.filter(s => s !== id) : [...openStages, id];
+            renderRoadmap();
+        }
+
+        function toggleCheck(id) {
+            completed = completed.includes(id) ? completed.filter(i => i !== id) : [...completed, id];
+            localStorage.setItem('sd_workspace_v16_done', JSON.stringify(completed));
+            renderAll();
+        }
+
+        function toggleNote(id) {
+            const box = document.getElementById(`note-box-${id}`);
+            const isHidden = box.classList.contains('hidden');
+            
+            // Hide all other open note boxes for clean UX if desired, 
+            // or just toggle this one. We will just toggle this one.
+            box.classList.toggle('hidden');
+            
+            if(isHidden) {
+                document.getElementById(`note-input-${id}`).focus();
+            }
+        }
+
+        function saveNote(id) {
+            const val = document.getElementById(`note-input-${id}`).value;
+            if(val.trim() === "") {
+                delete notes[id];
+            } else {
+                notes[id] = val;
+            }
+            localStorage.setItem('sd_workspace_v16_notes', JSON.stringify(notes));
+            // We don't renderAll here to prevent the box from snapping shut, 
+            // but we update the text in the button if it changed.
+            const row = document.getElementById(`row-${id}`);
+            const btn = row.querySelector('button');
+            const hasNote = val.trim() !== "";
+            btn.innerText = hasNote ? 'Note ✓' : 'Notes';
+            btn.className = `text-[9px] font-black ${hasNote ? 'text-sky-400' : 'text-slate-600'} uppercase hover:text-sky-400 transition-all`;
+        }
+
+        function openTopic(id) {
+            const t = syllabus.find(x => x.id === id);
+            if(!t) return;
+            document.getElementById('modalTitle').innerText = t.topic;
+            document.getElementById('modalCat').innerText = t.category;
+            document.getElementById('modalQuestion').innerText = `"${t.question}"`;
+
+            // Support both single-video (channel/video) and multi-video (videos[]) formats
+            const videoList = t.videos || [{ channel: t.channel, video: t.video }];
+            const container = document.getElementById('modalVideosContainer');
+            container.innerHTML = videoList.map(v => `
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-400 font-black text-xl border border-sky-500/20 shrink-0">${v.channel.charAt(0)}</div>
+                        <div>
+                            <p class="text-[10px] font-black text-white uppercase tracking-widest">${v.channel}</p>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase truncate max-w-[180px]">${v.video}</p>
+                        </div>
+                    </div>
+                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(v.video + ' ' + v.channel)}" target="_blank" class="w-full sm:w-auto px-8 py-3 bg-sky-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-sky-500 transition-all text-center">Watch Lecture</a>
+                </div>
+            `).join('<div class="border-t border-white/5"></div>');
+
+            document.getElementById('topicModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('topicModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+</body>
+</html>
