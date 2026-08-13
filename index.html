@@ -230,7 +230,7 @@
                     <div id="stat-stage-4" class="workspace-card rounded-[24px] p-6 flex flex-col justify-between">
                         <div>
                             <p class="text-[9px] font-black text-sky-400 uppercase tracking-widest mb-1">Stage 04</p>
-                            <h4 class="text-sm font-bold font-outfit text-white uppercase">Advanced LLD</h4>
+                            <h4 class="text-sm font-bold font-outfit text-white uppercase">LLD Fundamentals</h4>
                         </div>
                         <div class="mt-8">
                             <div class="flex justify-between items-end mb-2">
@@ -352,7 +352,22 @@
             { id: 19, level: 1, category: "HLD Foundations", topic: "Module 19: Capacity Planning", channel: "ByteByteGo", video: "Back-of-the-envelope estimation", question: "Estimate the QPS and bandwidth for a photo-sharing app with 10M daily active users." },
             { id: 18, level: 1, category: "HLD Foundations", topic: "Module 18: Database Sharding", channel: "Hello Interview", video: "Sharding Deep Dive", question: "How do you handle the re-sharding process for a live production database?" },
             { id: 75, level: 1, category: "Interaction Mastery", topic: "HLD Execution", channel: "Hello Interview", video: "High Level Design Essentials", question: "How do you prevent 'Analysis Paralysis' when choosing a database in the HLD phase?" },
-            { id: 24, level: 2, category: "Architectural Patterns", topic: "Module 24: Microservices Communication", channel: "ByteMonk", video: "REST vs gRPC in Microservices | Which One Should You Use? (Explained Clearly)", question: "What are the trade-offs of using synchronous gRPC versus asynchronous event-driven communication between microservices?" }
+            { id: 24, level: 2, category: "Architectural Patterns", topic: "Module 24: Microservices Communication", channel: "ByteMonk", video: "REST vs gRPC in Microservices | Which One Should You Use? (Explained Clearly)", question: "What are the trade-offs of using synchronous gRPC versus asynchronous event-driven communication between microservices?" },
+            // LLD Fundamentals — Curated, language-agnostic videos
+            { id: 61, level: 4, category: "LLD Fundamentals", topic: "Module 61: SOLID Principles", channel: "NeetCode", video: "SOLID Design Principles", question: "How does violating the Open-Closed Principle make a codebase fragile? Give a real example." },
+            { id: 62, level: 4, category: "LLD Fundamentals", topic: "Module 62: Creational Design Patterns", channel: "NeetCode", video: "Design Patterns Factory Method", question: "When would you choose Abstract Factory over Factory Method? What problem does Builder solve that telescoping constructors cannot?" },
+            { id: 63, level: 4, category: "LLD Fundamentals", topic: "Module 63: Structural Design Patterns", channel: "NeetCode", video: "Design Patterns Facade", question: "How does the Adapter pattern differ from the Facade pattern? When would you use a Decorator over inheritance?" },
+            { id: 64, level: 4, category: "LLD Fundamentals", topic: "Module 64: Behavioral Design Patterns", channel: "NeetCode", video: "Design Patterns Observer", question: "How does the Observer pattern enable loose coupling? Compare it with the Pub/Sub pattern." },
+            { id: 65, level: 4, category: "LLD Fundamentals", topic: "Module 65: Design a Cache (LRU/LFU)", channel: "Concept && Coding", video: "LRU Cache Low Level Design", question: "Design an LRU cache that supports O(1) get and put. How would you extend it to support TTL-based expiry?" },
+            { id: 66, level: 4, category: "LLD Fundamentals", topic: "Module 66: Design a Parking Lot", channel: "Concept && Coding", video: "Parking Lot Low Level Design", question: "How would you model multi-floor parking with different vehicle types? Handle concurrent entry/exit." },
+            { id: 67, level: 4, category: "LLD Fundamentals", topic: "Module 67: Design an Elevator System", channel: "Concept && Coding", video: "Elevator System Low Level Design", question: "Design the scheduling algorithm for a multi-elevator system. How do you optimize for wait time vs throughput?" },
+            { id: 68, level: 4, category: "LLD Fundamentals", topic: "Module 68: Design a Library System", channel: "Udit Agarwal", video: "Library Management System Low Level Design", question: "How do you handle book reservations, fines, and concurrent checkouts in a library system?" },
+            { id: 69, level: 4, category: "LLD Fundamentals", topic: "Module 69: Design a Movie Booking System", channel: "Concept && Coding", video: "BookMyShow System Design LLD", question: "How do you prevent double-booking of the same seat? Design the seat locking mechanism." },
+            { id: 70, level: 4, category: "LLD Fundamentals", topic: "Module 70: Design a Food Delivery System", channel: "Coder Army", video: "Food Delivery App Low Level Design", question: "How do you model the relationship between restaurants, menus, orders, and delivery agents?" },
+            { id: 71, level: 4, category: "LLD Fundamentals", topic: "Module 71: Design an ATM", channel: "Concept && Coding", video: "ATM Machine Low Level Design", question: "Design the state machine for ATM transactions. How do you handle partial dispensing failures?" },
+            { id: 72, level: 4, category: "LLD Fundamentals", topic: "Module 72: Design a Vending Machine", channel: "Concept && Coding", video: "Vending Machine Low Level Design", question: "Apply the State pattern to a vending machine. How do you handle insufficient change or out-of-stock items?" },
+            { id: 73, level: 4, category: "LLD Fundamentals", topic: "Module 73: Design a Logger & Alerting", channel: "Udit Agarwal", video: "Logging Framework Low Level Design", question: "Design a pluggable logging framework with multiple sinks (file, console, cloud). How do you make it thread-safe?" },
+            { id: 74, level: 4, category: "LLD Fundamentals", topic: "Module 74: Design a Task Scheduler", channel: "Coder Army", video: "Task Scheduler Low Level Design", question: "Design a task scheduler that supports cron expressions, retries, and priority queues." }
         ];
 
         // Fill remaining for full 74 topics (categorized by levels)
@@ -381,17 +396,10 @@
             55: "Design a URL Shortener",           56: "Design a Payment System",
             57: "Design a Rate Limiter",            58: "Design a Web Crawler",
             59: "Design Typeahead / Autocomplete",  60: "Design a Ticketing System",
-            61: "LLD: SOLID Principles",            62: "LLD: Creational Design Patterns",
-            63: "LLD: Structural Design Patterns",  64: "LLD: Behavioral Design Patterns",
-            65: "LLD: Design a Cache (LRU/LFU)",    66: "LLD: Design a Parking Lot",
-            67: "LLD: Design an Elevator System",   68: "LLD: Design a Library System",
-            69: "LLD: Design a Movie Booking System", 70: "LLD: Design a Food Delivery System",
-            71: "LLD: Design an ATM",               72: "LLD: Design a Vending Machine",
-            73: "LLD: Design a Logger & Alerting",  74: "LLD: Design a Task Scheduler",
         };
         for(let i=1; i<=74; i++) {
             if (syllabus.some(s => s.id === i)) continue;
-            let cat = i <= 20 ? "HLD Foundations" : i <= 40 ? "Architectural Patterns" : i <= 60 ? "Case Studies" : "Advanced LLD";
+            let cat = i <= 20 ? "HLD Foundations" : i <= 40 ? "Architectural Patterns" : i <= 60 ? "Case Studies" : "LLD Fundamentals";
             let lvl = i <= 20 ? 1 : i <= 40 ? 2 : i <= 60 ? 3 : 4;
             const label = topicMap[i] || `Topic ${i}`;
             syllabus.push({
@@ -479,7 +487,7 @@
                 { id: 1, name: "Stage 1: Building Foundations", desc: "High-Frequency Concepts" },
                 { id: 2, name: "Stage 2: Architectural Scaling", desc: "Reliability & Resilience" },
                 { id: 3, name: "Stage 3: Real-World Systems", desc: "FAANG Case Studies" },
-                { id: 4, name: "Stage 4: Advanced LLD", desc: "Low Level & Concurrency" }
+                { id: 4, name: "Stage 4: LLD Fundamentals", desc: "Design Patterns & Case Studies" }
             ];
 
             stages.forEach(stage => {
